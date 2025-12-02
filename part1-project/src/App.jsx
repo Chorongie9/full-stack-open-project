@@ -1,40 +1,59 @@
-const Header = (prop) => {
-  return <h1>{prop.course}</h1>
-}
-
-const Part = (props) => {
-  return <p>{props.name} {props.exercises}</p>
-}
-
-const Content = (props) => {
-  return (
-    <div>
-      <Part name={props.part1} exercises={props.exercises1} />
-      <Part name={props.part2} exercises={props.exercises2} />
-      <Part name={props.part3} exercises={props.exercises3} />
-    </div>
-  )
-}
-
-const Total = (props) => {
-  return <p>Number of exercises {props.total}</p>
-}
+import { useState } from 'react'
 
 
 const App = () => {
-  const course = 'Half Stack application development'
-  const part1 = 'Fundamentals of React'
-  const exercises1 = 10
-  const part2 = 'Using props to pass data'
-  const exercises2 = 7
-  const part3 = 'State of a component'
-  const exercises3 = 14
+  // save clicks of each button to its own state
+  const [good, setGood] = useState(0)
+  const [neutral, setNeutral] = useState(0)
+  const [bad, setBad] = useState(0)
 
+  const StatisticLine = ({text, value}) => {
+    return (<tr><td>{text}</td><td>{value}</td></tr>
+    )
+  }
+
+  const Button = ({onClick, text}) => (
+    <button onClick={onClick}>
+      {text}
+    </button>
+  )
+
+  const Statistics = ({good, neutral, bad}) => {
+      const total = good + neutral + bad 
+      const average = total === 0 ? 0 : (good - bad) / total
+      const positive = total === 0 ? 0 : (good / total) * 100
+      if (good + neutral + bad === 0) {
+        return (
+          <div>
+            <p>No feedback given</p>
+          </div>
+        )
+      }  
+      if (total != 0) {
+        return (
+            <div>
+              <table>
+                <tbody>
+                  <StatisticLine text="good" value ={good} />
+                  <StatisticLine text="neutral" value ={neutral} />
+                  <StatisticLine text="bad" value ={bad} />
+                  <StatisticLine text="average" value={average} />
+                  <StatisticLine text="positive" value={positive} />
+                </tbody>
+              </table>
+             
+            </div>
+        )
+  }
+}
   return (
     <div>
-      <Header course={course} />
-      <Content part1={part1} part2={part2} part3={part3} exercises1={exercises1} exercises2={exercises2} exercises3={exercises3} />
-      <Total total={exercises1 + exercises2 + exercises3} />
+      <h1>give feedback</h1>
+      <Button onClick={() => setGood(good + 1)} text="good" />
+      <Button onClick={() => setNeutral(neutral + 1)} text="neutral" />
+      <Button onClick={() => setBad(bad + 1)} text="bad" />
+      <h1>statistics</h1>
+      <Statistics good={good} neutral={neutral} bad={bad} />
     </div>
   )
 }
