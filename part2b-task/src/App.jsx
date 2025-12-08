@@ -3,19 +3,20 @@ import Form from './components/Form'
 import Filter from './components/Filter'
 import Persons from './components/Persons'
 import axios from 'axios'
+import peopleService from './services/people'
 
 const App = () => {
-  const [persons, setPersons] = useState([
-    { name: 'Arto Hellas' }
-  ]) 
+  const [persons, setPersons] = useState([]
+  ) 
 
-  useEffect(() => {
-    axios
-      .get('http://localhost:3001/persons')
-      .then(response => {
-        setPersons(response.data)
-      })
-  }, [])
+    useEffect(() => {
+      peopleService
+        .getAll()
+        .then(data => {
+          setPersons(data) 
+        })
+    }, [])
+
 
   const [newName, setNewName] = useState('')
   const [newNumber, setNewNumber] = useState('') 
@@ -34,25 +35,53 @@ const App = () => {
   }
 
 
-  const addPerson = (event) => {
-    event.preventDefault()
-    const personObject = {
-      name: newName,
-      number: newNumber,
-      id: persons.length + 1
-    }
-    if (persons.some(person => person.name === newName)) {
-      alert(`${newName} is already added to phonebook`)
-      return
-    }
-    setPersons(persons.concat(personObject))
-    setNewNumber('')
-    setNewName('')
-  }
+    const addPerson = (event) => {
+      event.preventDefault()
+      const personObject = {
+        name: newName,
+        number: newNumber
+        // Do NOT set id here
+      }
+      if (persons.some(person => person.name === newName)) {
+        if (window.confirm(`${newName} is already added to phonebook, replace the old number with a new one?`)) {
+          const personToUpdate = persons.find(person => person.name === newName)
+          peopleService.update(personToUpdate.id, { ...personToUpdate, number: newNumber })
+            .then(response => {
+              setPersons(persons.map(person => person.id !== response.id ? person : response))
+            })
+        }
+        return
+      }
 
-  const personsToShow = persons.filter(person =>
-    person.name.toLowerCase().includes(filter.toLowerCase())
-  )
+      peopleService.create(personObject)
+        .then(response => {
+          setPersons(persons.concat(response)) // response has backend id
+          setNewNumber('')
+          setNewName('')
+        })
+        .catch(error => {
+          console.error(error)
+        })
+    }
+
+  const personsToShow = Array.isArray(persons)
+    ? persons.filter(person =>
+        person.name.toLowerCase().includes(filter.toLowerCase())
+      )
+    : []
+
+  const handleDelete = id => {
+    if (window.confirm('Delete this person?')) {
+      peopleService.remove(id)
+        .then(() => {
+          // After deletion, fetch the updated list from backend
+          peopleService.getAll().then(data => setPersons(data))
+        })
+        .catch(error => {
+          alert('Error deleting person')
+        })
+    }
+  }
 
   return (
     <div>
@@ -60,7 +89,7 @@ const App = () => {
       <Filter filter={filter} setFilter={setFilter} />
       <Form addPerson={addPerson} newName={newName} handleNameChange={handleNameChange} newNumber={newNumber} handleNumberChange={handleNumberChange} />
       <h2>Numbers</h2>
-      <Persons personsToShow={personsToShow} />
+      <Persons personsToShow={personsToShow} handleDelete={handleDelete} />
     </div>
   )
 }
