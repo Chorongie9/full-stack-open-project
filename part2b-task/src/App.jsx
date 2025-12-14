@@ -4,6 +4,8 @@ import Filter from './components/Filter'
 import Persons from './components/Persons'
 import axios from 'axios'
 import peopleService from './services/people'
+import Notification from './components/Notification'
+import Error from './components/Error'
 
 const App = () => {
   const [persons, setPersons] = useState([]
@@ -20,8 +22,9 @@ const App = () => {
 
   const [newName, setNewName] = useState('')
   const [newNumber, setNewNumber] = useState('') 
-
+  const [notification, setNotification] = useState('')
   const [filter, setFilter] = useState('')
+  const [error, setErrorMessage] = useState('')
 
 
   const handleNumberChange = (event) => {
@@ -48,10 +51,15 @@ const App = () => {
           peopleService.update(personToUpdate.id, { ...personToUpdate, number: newNumber })
             .then(response => {
               setPersons(persons.map(person => person.id !== response.id ? person : response))
+
+            })
+            .catch(error => {
+              setErrorMessage(`Information of ${newName} has already been removed from server`)
             })
         }
         return
       }
+      
 
       peopleService.create(personObject)
         .then(response => {
@@ -62,6 +70,9 @@ const App = () => {
         .catch(error => {
           console.error(error)
         })
+      
+      setNotification(`Added ${newName}`)
+
     }
 
   const personsToShow = Array.isArray(persons)
@@ -86,6 +97,8 @@ const App = () => {
   return (
     <div>
       <h2>Phonebook</h2>
+      <Notification message={notification} />
+      <Error message={error} />
       <Filter filter={filter} setFilter={setFilter} />
       <Form addPerson={addPerson} newName={newName} handleNameChange={handleNameChange} newNumber={newNumber} handleNumberChange={handleNumberChange} />
       <h2>Numbers</h2>
